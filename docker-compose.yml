@@ -17,6 +17,7 @@ services:
       - N8N_SKIP_SETUP=true
       - N8N_USER_FOLDER=/app/.n8n
       - N8N_CUSTOM_EXTENSIONS=/app/.n8n/custom
+      - GMAIL_OAUTH_CONFIG_PATH=/app/gmail-oauth-config.json
     volumes:
       - ./:/app
       - n8n_data:/app/.n8n
