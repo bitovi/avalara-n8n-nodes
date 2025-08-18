@@ -1,48 +1,78 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n Custom Node Development Environment
 
-# n8n-nodes-starter
+A Docker-based development environment for building and testing custom n8n nodes with automatic building and hot-reloading.
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](https://n8n.io). It includes the node linter and other dependencies.
+## Quick Start
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+**Prerequisites:** Docker and Docker Compose
 
-If you would like your node to be available on n8n cloud you can also [submit your node for verification](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/).
-
-## Prerequisites
-
-You need the following installed on your development machine:
-
-* [git](https://git-scm.com/downloads)
-* Node.js and npm. Minimum version Node 20. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  npm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
-
-## Using this starter
-
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
-
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
+1. **Start the environment:**
+   ```bash
+   docker-compose up
    ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
+   n8n will be available at http://localhost:5678
+
+2. **Create your custom nodes:**
+   - Add node files to `/nodes/YourNodeName/`
+   - Add credentials to `/credentials/` if needed
+   - Update `package.json` to register your nodes
+
+3. **Refresh after changes:**
+   - **TypeScript changes:** Restart the container: `docker-compose restart`
+   - **Package changes:** Rebuild: `docker-compose down && docker-compose up`
+
+## Project Structure
+
+```
+├── nodes/                    # Your custom nodes go here
+│   ├── ExampleNode/         # Example node implementation
+│   └── HttpBin/             # Another example node
+├── credentials/             # Custom credential types
+├── scripts/n8n-startup.sh  # Automatic build and startup script
+├── docker-compose.yml      # Development environment config
+└── package.json            # Node registration and dependencies
+```
+
+## Adding New Nodes
+
+1. **Create node directory:** `/nodes/YourNodeName/`
+2. **Add TypeScript files:** `YourNodeName.node.ts`
+3. **Register in package.json:**
+   ```json
+   "n8n": {
+     "nodes": [
+       "dist/nodes/YourNodeName/YourNodeName.node.js"
+     ]
+   }
    ```
-3. Run `npm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `npm run lint` to check for errors or `npm run lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+4. **Restart container:** `docker-compose restart`
 
-## More information
+## Development Commands
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+```bash
+# Start development environment
+docker-compose up
+
+# Restart after code changes
+docker-compose restart
+
+# Rebuild everything
+docker-compose down && docker-compose up
+
+# Run inside container for debugging
+docker-compose exec n8n-dev bash
+
+# Check logs
+docker-compose logs n8n-dev
+```
+
+## How It Works
+
+- Container automatically installs dependencies and builds TypeScript
+- Built nodes are mounted to n8n's custom extensions directory
+- Changes to TypeScript require container restart for compilation
+- n8n automatically loads custom nodes on startup
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+[MIT](LICENSE.md)
