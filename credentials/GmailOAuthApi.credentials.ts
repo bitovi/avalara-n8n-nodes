@@ -34,8 +34,8 @@ function loadGmailConfig() {
 const gmailConfig = loadGmailConfig();
 
 export class GmailOAuthApi implements ICredentialType {
-	name = 'gmailOAuthApi';
-	displayName = 'Gmail OAuth API (Custom)';
+	name = 'gmailOAuth2';
+	displayName = 'Gmail OAuth2 API';
 	documentationUrl = 'https://developers.google.com/gmail/api/auth/web-server';
 	extends = ['oAuth2Api'];
 
