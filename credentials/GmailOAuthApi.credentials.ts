@@ -8,6 +8,31 @@ import {
 } from 'n8n-workflow';
 import { readFileSync, existsSync } from 'fs';
 
+// Load config at module level to make values available for default properties
+function loadGmailConfig() {
+	const configFilePath = process.env.GMAIL_OAUTH_CONFIG_PATH || '/app/gmail-oauth-config.json';
+	
+	if (!existsSync(configFilePath)) {
+		console.warn(`Gmail OAuth config file not found at ${configFilePath}`);
+		return { clientId: '', clientSecret: '' };
+	}
+
+	try {
+		const configContent = readFileSync(configFilePath, 'utf8');
+		const config = JSON.parse(configContent);
+		
+		return {
+			clientId: config.clientId || '',
+			clientSecret: config.clientSecret || '',
+		};
+	} catch (error) {
+		console.warn(`Error loading Gmail OAuth config: ${error.message}`);
+		return { clientId: '', clientSecret: '' };
+	}
+}
+
+const gmailConfig = loadGmailConfig();
+
 export class GmailOAuthApi implements ICredentialType {
 	name = 'gmailOAuthApi';
 	displayName = 'Gmail OAuth API (Custom)';
@@ -16,29 +41,30 @@ export class GmailOAuthApi implements ICredentialType {
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Config File Path',
-			name: 'configFilePath',
-			type: 'hidden',
+			displayName: 'Configuration Info',
+			name: 'notice',
+			type: 'notice',
 			default: '',
+			description: `OAuth credentials are automatically loaded from config file: ${process.env.GMAIL_OAUTH_CONFIG_PATH || '/app/gmail-oauth-config.json'}`,
 		},
-		// Override inherited OAuth2 fields to hide them
 		{
 			displayName: 'Client ID',
 			name: 'clientId',
 			type: 'hidden',
-			default: '',
+			default: gmailConfig.clientId,
+			required: true,
+			description: 'Your Google OAuth Client ID (auto-populated from config file)',
 		},
 		{
 			displayName: 'Client Secret',
 			name: 'clientSecret',
 			type: 'hidden',
-			default: '',
-		},
-		{
-			displayName: 'OAuth Redirect URL',
-			name: 'callbackUrl',
-			type: 'hidden',
-			default: '',
+			typeOptions: {
+				password: true,
+			},
+			default: gmailConfig.clientSecret,
+			required: true,
+			description: 'Your Google OAuth Client Secret (auto-populated from config file)',
 		},
 		{
 			displayName: 'Grant Type',
@@ -79,51 +105,15 @@ export class GmailOAuthApi implements ICredentialType {
 	];
 
 	async preAuthentication(this: IHttpRequestHelper, credentials: ICredentialDataDecryptedObject): Promise<IDataObject> {
-		// Get config file path from environment variable
-		const configFilePath = process.env.GMAIL_OAUTH_CONFIG_PATH || '/app/gmail-oauth-config.json';
-		
-		if (!configFilePath) {
+		// Values are already populated from config file via default properties
+		// Just ensure they're present for OAuth flow
+		if (!credentials.clientId || !credentials.clientSecret) {
 			throw new NodeOperationError(
 				null as any,
-				'Config file path is required. Set GMAIL_OAUTH_CONFIG_PATH environment variable.',
+				'Client ID and Client Secret are required. Please check your config file or manually enter the values.',
 			);
 		}
 
-		if (!existsSync(configFilePath)) {
-			throw new NodeOperationError(
-				null as any,
-				`Config file not found at path: ${configFilePath}`,
-			);
-		}
-
-		try {
-			const configContent = readFileSync(configFilePath, 'utf8');
-			const config = JSON.parse(configContent);
-
-			if (!config.clientId || !config.clientSecret) {
-				throw new NodeOperationError(
-					null as any,
-					'Config file must contain clientId and clientSecret properties',
-				);
-			}
-
-			// Inject the values from the file into the credential
-			return {
-				...credentials,
-				clientId: config.clientId,
-				clientSecret: config.clientSecret,
-			};
-		} catch (error) {
-			if (error instanceof SyntaxError) {
-				throw new NodeOperationError(
-					null as any,
-					`Invalid JSON in config file: ${configFilePath}`,
-				);
-			}
-			throw new NodeOperationError(
-				null as any,
-				`Error reading config file: ${error.message}`,
-			);
-		}
+		return credentials;
 	}
 }
