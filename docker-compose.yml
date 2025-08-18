@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  n8n-dev:
+    image: node:20
+    container_name: n8n-dev
+    working_dir: /app
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_LOG_LEVEL=debug
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_SKIP_SETUP=true
+      - N8N_USER_FOLDER=/app/.n8n
+      - N8N_CUSTOM_EXTENSIONS=/app/.n8n/custom
+    volumes:
+      - ./:/app
+      - n8n_data:/app/.n8n
+      - ./dist:/app/.n8n/custom
+      - npm_global:/usr/local/lib/node_modules
+      - npm_bin:/usr/local/bin
+    command: ["bash", "/app/scripts/n8n-startup.sh"]
+
+volumes:
+  n8n_data:
+    driver: local
+  npm_global:
+    driver: local
+  npm_bin:
+    driver: local

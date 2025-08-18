@@ -1,0 +1,8 @@
+# Copilot instructions
+
+Use this file to determine how GitHub Copilot should behave when generating code for this repository.
+
+## Docker Compose
+
+- `docker compose` (not `docker-compose`) is used for running the development environment.
+- ONLY work through docker and docker-compose. Do NOT run n8n directly on the host machine.
